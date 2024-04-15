@@ -1,0 +1,4 @@
+name: HubCombat
+version: '${project.version}'
+main: queryys.hubcombat.HubCombat
+api-version: '1.20'
