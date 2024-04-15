@@ -50,6 +50,9 @@ public class HubCombat extends JavaPlugin implements Listener, CommandExecutor {
         Objects.requireNonNull(getCommand("hubcombat")).setExecutor(this);
         Objects.requireNonNull(getCommand("stats")).setExecutor(new StatsCommand(this, combatScoreManager, playerData));
         Objects.requireNonNull(getCommand("combat")).setExecutor(new CombatCommand(this, combatManager));
+
+        // Save default config
+        saveDefaultConfig();
     }
 
     @Override

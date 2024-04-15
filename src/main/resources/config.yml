@@ -1,0 +1,12 @@
+# Configurazione del plugin HubCombat
+
+# Impostazioni della spada di combattimento
+combat_sword_name: "&6Combat Sword"
+combat_sword_damage: 1
+combat_sword_sound: ENTITY_PLAYER_LEVELUP
+
+# Impostazioni dei messaggi
+messages:
+  enter_combat: "&eSei entrato in modalità combattimento!"
+  exit_combat: "&eSei uscito dalla modalità combattimento."
+  cooldown_message: "&cDevi aspettare prima di entrare in combattimento nuovamente."
