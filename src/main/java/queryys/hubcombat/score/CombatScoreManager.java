@@ -1,6 +1,7 @@
 package queryys.hubcombat.score;
 
 import org.bukkit.entity.Player;
+import queryys.hubcombat.HubCombat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +10,10 @@ public class CombatScoreManager {
 
     private final Map<Player, Integer> kills = new HashMap<>();
     private final Map<Player, Integer> deaths = new HashMap<>();
+
+    public CombatScoreManager(HubCombat hubCombat) {
+
+    }
 
     public void addKill(Player player) {
         int currentKills = kills.getOrDefault(player, 0);
