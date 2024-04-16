@@ -1,6 +1,10 @@
 package queryys.hubcombat;
 
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -12,31 +16,20 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import queryys.hubcombat.commands.CombatCommand;
 import queryys.hubcombat.commands.StatsCommand;
 import queryys.hubcombat.managers.CombatManager;
 import queryys.hubcombat.score.CombatScoreManager;
-import queryys.hubcombat.Data.PlayerData;
-
-import static net.md_5.bungee.api.chat.TextComponent.fromLegacyText;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
 
 public class HubCombat extends JavaPlugin implements Listener, CommandExecutor {
 
-    private final Map<UUID, Long> lastAttack = new HashMap<>();
     private CombatManager combatManager;
     private CombatScoreManager combatScoreManager;
-    private PlayerData playerData;
 
     @Override
     public void onEnable() {
@@ -45,16 +38,12 @@ public class HubCombat extends JavaPlugin implements Listener, CommandExecutor {
         // Initialize managers
         combatScoreManager = new CombatScoreManager(this);
         combatManager = new CombatManager(this);
-        playerData = new PlayerData(this);
 
         // Register events
         getServer().getPluginManager().registerEvents(this, this);
 
         // Register commands
         registerCommands();
-
-        // Save default config
-        saveDefaultConfig();
 
         getLogger().info("HubCombat plugin enabled successfully.");
     }
@@ -69,7 +58,7 @@ public class HubCombat extends JavaPlugin implements Listener, CommandExecutor {
 
         PluginCommand statsCommand = getCommand("stats");
         if (statsCommand != null) {
-            statsCommand.setExecutor(new StatsCommand(combatScoreManager, playerData));
+            statsCommand.setExecutor(new StatsCommand(combatScoreManager));
         } else {
             getLogger().warning("Command 'stats' not found!");
         }
@@ -85,47 +74,51 @@ public class HubCombat extends JavaPlugin implements Listener, CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("hubcombat")) {
-            // Implementa la logica del comando /hubcombat qui
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(ChatColor.RED + "Questo comando può essere eseguito solo da un giocatore.");
-                return true;
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                // Logica per il comando /hubcombat per i giocatori
+                player.sendMessage(ChatColor.GREEN + "Hai eseguito il comando /hubcombat!");
+            } else {
+                // Logica per il comando /hubcombat per il console
+                Bukkit.getLogger().info("Il comando /hubcombat può essere eseguito solo da un giocatore.");
             }
-
-            Player player = (Player) sender;
-            // Logica del comando /hubcombat per il giocatore
             return true;
-        } else {
-            sender.sendMessage(ChatColor.RED + "Comando sconosciuto.");
-            return false;
+        } else if (cmd.getName().equalsIgnoreCase("stats")) {
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                // Logica per il comando /stats per i giocatori
+                player.sendMessage(ChatColor.GREEN + "Ecco le tue statistiche:");
+                player.sendMessage(ChatColor.YELLOW + "Kills: " + combatScoreManager.getKills(player));
+                player.sendMessage(ChatColor.YELLOW + "Deaths: " + combatScoreManager.getDeaths(player));
+            } else {
+                // Logica per il comando /stats per il console
+                Bukkit.getLogger().info("Il comando /stats può essere eseguito solo da un giocatore.");
+            }
+            return true;
         }
+        // Aggiungi altri comandi qui
+        return false;
     }
+
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
+        // Player join logic
+        player.sendMessage(ChatColor.GREEN + "Benvenuto, " + player.getName() + "!");
+        // Esempio: Assegna la spada al giocatore al momento del join
         ItemStack sword = new ItemStack(Material.DIAMOND_SWORD);
-        sword.addUnsafeEnchantment(Enchantment.DAMAGE_ALL, 1);
-        ItemMeta meta = sword.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(ChatColor.GOLD + "Spada da combattimento");
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            NamespacedKey key = new NamespacedKey(this, "combat_sword");
-            meta.getPersistentDataContainer().set(key, PersistentDataType.LONG, System.currentTimeMillis());
-            sword.setItemMeta(meta);
-            player.getInventory().setItem(0, sword);
-            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_HURT, 1, 1);
-        } else {
-            getLogger().warning("Impossibile creare il meta dell'oggetto per il giocatore " + player.getName());
-        }
+        player.getInventory().addItem(sword);
     }
+
 
     @Override
     public void onDisable() {
-        getLogger().info("Disabling HubCombat plugin...");
-        // Implementa la logica di pulizia qui
-        combatScoreManager.saveData(); // Salvataggio dei dati prima dello spegnimento
-        getLogger().info("HubCombat plugin disabled.");
+        // Esempio di clean-up logic: salvare i dati prima di disabilitare il plugin
+        combatScoreManager.saveData();
+        getLogger().info("HubCombat plugin disabilitato. Dati salvati.");
     }
+
 
     @EventHandler
     public void onPlayerAttack(PlayerInteractEvent event) {
@@ -133,20 +126,69 @@ public class HubCombat extends JavaPlugin implements Listener, CommandExecutor {
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
             ItemStack item = player.getInventory().getItemInMainHand();
             if (isCombatSword(item)) {
-                // Implementa la logica di attacco del giocatore qui
-                player.sendMessage(ChatColor.RED + "La logica di attacco con la spada da combattimento deve essere implementata.");
+                // Verifica se il giocatore ha la spada da combattimento
+                Player target = getTargetPlayer(player);
+                if (target != null) {
+                    // Se il giocatore ha colpito un altro giocatore
+                    player.sendMessage(ChatColor.GREEN + "Sei entrato in combattimento!");
+                    target.sendMessage(ChatColor.RED + "Sei stato colpito da " + player.getName() + "!");
+                } else {
+                    // Se il giocatore ha colpito l'aria o un blocco senza colpire un giocatore
+                    player.sendMessage(ChatColor.RED + "Non hai colpito nessun giocatore!");
+                }
             }
         }
     }
 
-    private boolean isCombatSword(ItemStack item) {
-        if (item != null && item.getType() == Material.DIAMOND_SWORD) {
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                NamespacedKey key = new NamespacedKey(this, "combat_sword");
-                return meta.getPersistentDataContainer().has(key, PersistentDataType.LONG);
+    private Player getTargetPlayer(Player player) {
+        // Ottiene la direzione dello sguardo del giocatore
+        Location eyeLocation = player.getEyeLocation();
+        @NotNull Vector direction = eyeLocation.getDirection();
+
+        // Esegui un raycast per trovare il giocatore colpito
+        double maxDistance = 100; // Distanza massima per il raycast
+        Location targetLocation = eyeLocation.clone();
+        for (double distance = 0; distance <= maxDistance; distance += 0.5) {
+            targetLocation.add(direction);
+            Block block = targetLocation.getBlock();
+            if (block.getType().isSolid()) {
+                // Se il raycast colpisce un blocco solido, interrompi il loop
+                break;
+            }
+
+            // Controlla se c'è un giocatore nel blocco colpito
+            for (Player target : Bukkit.getOnlinePlayers()) {
+                if (target != player && target.getLocation().getBlock().equals(block)) {
+                    // Se il giocatore non è quello che ha eseguito il raycast e si trova nel blocco colpito, restituisci il giocatore
+                    return target;
+                }
             }
         }
-        return false;
+
+        // Se nessun giocatore è stato colpito, restituisci null
+        return null;
     }
+
+    private boolean isCombatSword(ItemStack item) {
+        // Verifica se l'oggetto è una spada
+        if (item.getType() != Material.DIAMOND_SWORD && item.getType() != Material.IRON_SWORD &&
+                item.getType() != Material.GOLDEN_SWORD && item.getType() != Material.STONE_SWORD &&
+                item.getType() != Material.WOODEN_SWORD) {
+            return false;
+        }
+
+        // Verifica se la spada ha un nome personalizzato che la identifica come spada da combattimento
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null && meta.hasDisplayName() && meta.getDisplayName().equals(ChatColor.RED + "Spada da Combattimento")) {
+            return true;
+        }
+
+        // Verifica se la spada ha un enchantment specifico che la identifica come spada da combattimento
+        return meta != null && meta.hasEnchants() && meta.getEnchants().containsKey(Enchantment.KNOCKBACK);
+
+        // Aggiungi ulteriori condizioni di identificazione della spada da combattimento qui
+
+        // Se non si soddisfa nessuna delle condizioni sopra, restituisci false
+    }
+
 }
