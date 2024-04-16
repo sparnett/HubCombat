@@ -40,4 +40,7 @@ public class CombatScoreManager {
         // Calcola lo score in base al numero di uccisioni e morti
         return playerKills - playerDeaths;
     }
+
+    public void saveData() {
+    }
 }

@@ -10,10 +10,10 @@ import queryys.hubcombat.managers.CombatManager;
 
 public class CombatCommand implements CommandExecutor {
 
-    private final HubCombat plugin;
+    private HubCombat plugin;
     private final CombatManager combatManager;
 
-    public CombatCommand(HubCombat plugin, CombatManager combatManager) {
+    public CombatCommand(CombatManager combatManager) {
         this.plugin = plugin;
         this.combatManager = combatManager;
     }

@@ -5,17 +5,14 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import queryys.hubcombat.Data.PlayerData;
-import queryys.hubcombat.HubCombat;
 import queryys.hubcombat.score.CombatScoreManager;
 
 public class StatsCommand implements CommandExecutor {
 
-    private final HubCombat plugin;
     private final CombatScoreManager combatScoreManager;
     private final PlayerData playerData;
 
-    public StatsCommand(HubCombat plugin, CombatScoreManager combatScoreManager, PlayerData playerData) {
-        this.plugin = plugin;
+    public StatsCommand(CombatScoreManager combatScoreManager, PlayerData playerData) {
         this.combatScoreManager = combatScoreManager;
         this.playerData = playerData;
     }
